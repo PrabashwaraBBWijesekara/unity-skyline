@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class postmethod : MonoBehaviour
 {
@@ -45,21 +46,27 @@ public class postmethod : MonoBehaviour
                 jwt = response;
                 // Log the JWT
                 Debug.Log("You are successfully authenticated. Your JWT token is:" + jwt);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+1);
+
             }
             else if (request.responseCode == 400) // Bad Request
             {
                 // Log the error message
                 Debug.LogError("Bad Request: " + request.downloadHandler.text);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex +2);
             }
             else if (request.responseCode == 401) // Unauthorized
             {
                 // Log the error message
                 Debug.LogError("Unauthorized: " + request.downloadHandler.text);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+2);
+
             }
             else // Other errors
             {
                 // Log the error message
                 Debug.LogError("Request failed: " + request.error);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+2);
             }
         }
     }
@@ -68,6 +75,7 @@ public class postmethod : MonoBehaviour
     {
         StartCoroutine(PostRequest());
     }
+
 }
 
 // A custom certificate handler that can validate the server certificate
