@@ -15,6 +15,6 @@ EditorBuildSettings:
     path: Assets/MainMenu.unity
     guid: 49e76a7deee34484186469b303f9430f
   - enabled: 1
-    path: Assets/Scenes/ErrorPage.unity
-    guid: 9ee6ff49366bbd9439f78ebab74df704
+    path: Assets/ErrorPage.unity
+    guid: 01f804c21d2acfd44a5a3a6a2b98c987
   m_configObjects: {}
