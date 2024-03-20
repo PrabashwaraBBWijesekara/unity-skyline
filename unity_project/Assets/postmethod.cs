@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic;
-using SimpleJSON;
+using Newtonsoft.Json.Linq;
 using System;
 
 public class postmethod : MonoBehaviour
@@ -12,21 +11,17 @@ public class postmethod : MonoBehaviour
     private string loginEndpoint = "http://20.15.114.131:8080/api/login";
     private string profileEndpoint = "http://20.15.114.131:8080/api/user/profile/view";
 
-    
     private string name = "u";
     string jwt = "no";
 
     public IEnumerator PostRequest()
     {
-
-     
         string json = "{\"apiKey\":\"" + apiKey + "\"}";
         byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
-        MyCertificateHandler certificateHandler = new MyCertificateHandler();
 
         using (UnityWebRequest request = UnityWebRequest.PostWwwForm(loginEndpoint, ""))
         {
-            request.certificateHandler = certificateHandler;
+            //request.certificateHandler = null; // Disable certificate validation
             request.SetRequestHeader("Content-Type", "application/json");
             name = "Gishan";
             Debug.Log(name);
@@ -37,6 +32,8 @@ public class postmethod : MonoBehaviour
             if (request.responseCode == 200)
             {
                 string response = request.downloadHandler.text;
+                //string response_up = request.uploadHandler.text;
+                //Debug.Log(response_up);
                 jwt = response;
                 Debug.Log("You are successfully authenticated. Your JWT token is:" + jwt);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -65,16 +62,11 @@ public class postmethod : MonoBehaviour
 
     private IEnumerator GetProfile()
     {
-        // Parse the JWT token from the provided JSON
-
-
         using (UnityWebRequest request = UnityWebRequest.PostWwwForm(loginEndpoint, ""))
         {
-            MyCertificateHandler certificateHandler = new MyCertificateHandler();
-            request.certificateHandler = certificateHandler;
+            request.certificateHandler = null; // Disable certificate validation
             request.SetRequestHeader("Content-Type", "application/json");
 
-            // Construct JSON data for the request
             string requestData = "{\"apiKey\":\"" + apiKey + "\"}";
             byte[] data = System.Text.Encoding.UTF8.GetBytes(requestData);
             request.uploadHandler = new UploadHandlerRaw(data);
@@ -85,26 +77,26 @@ public class postmethod : MonoBehaviour
             {
                 string response = request.downloadHandler.text;
                 jwt = response;
+                try
+                {
+                    // Parse the JSON string
+                    JObject jsonResponse = JObject.Parse(response);
+
+                    // Extract the JWT token value
+                    string jwtToken = (string)jsonResponse["token"];
+                    name = jwtToken;
+                    Debug.Log("JWT Token: " + jwtToken);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Log("Error parsing JSON: " + ex.Message);
+                }
             }
-            // Assuming jwt is your JSON response
-
-
-            // Parse the JSON string into a JSONNode
-           
-
-
         }
-
-
-
-
-
-
-
 
         using (UnityWebRequest request = UnityWebRequest.Get(profileEndpoint))
         {
-            request.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJvdmVyc2lnaHRfZzE0IiwiaWF0IjoxNzEwODY4NjAyLCJleHAiOjE3MTA5MDQ2MDJ9.YkrL98jcTHmOuJs8MaWqxVYVBEekgmDQb3OJko5fbCIFgnojtRyhyHl4aOgFacEPNgsnVn6-TVcDL23-MGsX0A");
+            request.SetRequestHeader("Authorization", "Bearer " + name);
 
             yield return request.SendWebRequest();
 
@@ -124,7 +116,6 @@ public class postmethod : MonoBehaviour
         }
     }
 
-
     public void OnButtonClick()
     {
         StartCoroutine(PostRequest());
@@ -132,43 +123,6 @@ public class postmethod : MonoBehaviour
 
     public void OnButtonGETclick()
     {
-        StartCoroutine(GetProfile()); // Pass the jwt token to the GetProfile coroutine
+        StartCoroutine(GetProfile());
     }
 }
-
-public class MyCertificateHandler : CertificateHandler
-{
-    protected override bool ValidateCertificate(byte[] certificateData)
-    {
-        return true;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
