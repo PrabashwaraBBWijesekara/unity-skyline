@@ -1,92 +1,174 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using System.Collections;
+using System.Collections.Generic;
+using SimpleJSON;
+using System;
 
 public class postmethod : MonoBehaviour
 {
     private string apiKey = "NjVkNDIyMjNmMjc3NmU3OTI5MWJmZGIzOjY1ZDQyMjIzZjI3NzZlNzkyOTFiZmRhOQ";
-    private string endpoint = "http://20.15.114.131:8080/api/login";
+    private string loginEndpoint = "http://20.15.114.131:8080/api/login";
+    private string profileEndpoint = "http://20.15.114.131:8080/api/user/profile/view";
 
-    private string jwt;
+    
+    private string name = "u";
+    string jwt = "no";
 
-    private IEnumerator PostRequest()
+    public IEnumerator PostRequest()
     {
-        // Create a JSON object with the api key
+
+     
         string json = "{\"apiKey\":\"" + apiKey + "\"}";
-
-        // Convert the JSON object to bytes
         byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
-
-        // Create a custom certificate handler that can validate the server certificate
         MyCertificateHandler certificateHandler = new MyCertificateHandler();
 
-        // Create a post request with the data and the certificate handler
-        using (UnityWebRequest request = UnityWebRequest.PostWwwForm(endpoint, ""))
+        using (UnityWebRequest request = UnityWebRequest.PostWwwForm(loginEndpoint, ""))
         {
-            // Assign the certificate handler to the request
             request.certificateHandler = certificateHandler;
-
-            // Set the content type header to application/json
             request.SetRequestHeader("Content-Type", "application/json");
-
-            // Set the upload handler to send the data
+            name = "Gishan";
+            Debug.Log(name);
             request.uploadHandler = new UploadHandlerRaw(data);
 
-            // Send the request and wait for a response
             yield return request.SendWebRequest();
 
-            // Check the status code of the response
-            if (request.responseCode == 200) // OK
+            if (request.responseCode == 200)
             {
-                // Get the response text
                 string response = request.downloadHandler.text;
-                // Store the response as JWT
                 jwt = response;
-                // Log the JWT
                 Debug.Log("You are successfully authenticated. Your JWT token is:" + jwt);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+1);
-
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                name = jwt;
+                Debug.Log(name);
             }
-            else if (request.responseCode == 400) // Bad Request
+            else if (request.responseCode == 400)
             {
-                // Log the error message
                 Debug.LogError("Bad Request: " + request.downloadHandler.text);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex +2);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 2);
             }
-            else if (request.responseCode == 401) // Unauthorized
+            else if (request.responseCode == 401)
             {
-                // Log the error message
                 Debug.LogError("Unauthorized: " + request.downloadHandler.text);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+2);
-
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 2);
             }
-            else // Other errors
+            else
             {
-                // Log the error message
                 Debug.LogError("Request failed: " + request.error);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+2);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 2);
+            }
+
+            yield return jwt;
+        }
+    }
+
+    private IEnumerator GetProfile()
+    {
+        // Parse the JWT token from the provided JSON
+
+
+        using (UnityWebRequest request = UnityWebRequest.PostWwwForm(loginEndpoint, ""))
+        {
+            MyCertificateHandler certificateHandler = new MyCertificateHandler();
+            request.certificateHandler = certificateHandler;
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            // Construct JSON data for the request
+            string requestData = "{\"apiKey\":\"" + apiKey + "\"}";
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(requestData);
+            request.uploadHandler = new UploadHandlerRaw(data);
+
+            yield return request.SendWebRequest();
+
+            if (request.responseCode == 200)
+            {
+                string response = request.downloadHandler.text;
+                jwt = response;
+            }
+            // Assuming jwt is your JSON response
+
+
+            // Parse the JSON string into a JSONNode
+           
+
+
+        }
+
+
+
+
+
+
+
+
+        using (UnityWebRequest request = UnityWebRequest.Get(profileEndpoint))
+        {
+            request.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJvdmVyc2lnaHRfZzE0IiwiaWF0IjoxNzEwODY4NjAyLCJleHAiOjE3MTA5MDQ2MDJ9.YkrL98jcTHmOuJs8MaWqxVYVBEekgmDQb3OJko5fbCIFgnojtRyhyHl4aOgFacEPNgsnVn6-TVcDL23-MGsX0A");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string response = request.downloadHandler.text;
+                Debug.Log("Profile Data: " + response);
+            }
+            else if (request.responseCode == 401)
+            {
+                Debug.LogError("Failed to get profile data: Unauthorized (401). Check the JWT token validity and permissions.");
+            }
+            else
+            {
+                Debug.LogError("Failed to get profile data: " + request.error);
             }
         }
     }
+
 
     public void OnButtonClick()
     {
         StartCoroutine(PostRequest());
     }
 
-}
-
-// A custom certificate handler that can validate the server certificate
-public class MyCertificateHandler : CertificateHandler
-{
-    // Override this function to implement custom certificate validation logic
-    protected override bool ValidateCertificate(byte[] certificateData)
+    public void OnButtonGETclick()
     {
-        // TODO: Add your own certificate validation logic here
-        // For example, you can compare the certificateData with a known certificate
-        return true; // Return true if the certificate is valid, false otherwise
+        StartCoroutine(GetProfile()); // Pass the jwt token to the GetProfile coroutine
     }
 }
+
+public class MyCertificateHandler : CertificateHandler
+{
+    protected override bool ValidateCertificate(byte[] certificateData)
+    {
+        return true;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
